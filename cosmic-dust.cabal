@@ -49,6 +49,7 @@ cabal-version:       >=1.10
 library
   -- Modules exported by the library.
   exposed-modules:     Cosmic.Dust.Value
+                       Cosmic.Dust.Identifiers
                        -- Continue exposed modules here
   -- Modules included in this library but not exported.
   -- other-modules:       
@@ -57,7 +58,9 @@ library
   -- other-extensions:    
   
   -- Other library packages from which modules are imported.
-  build-depends:       base >=4.7 && <4.8
+  build-depends:      base >=4.7 && <4.8
+                    , text
+                    , bytestring
   
   -- Directories containing source files.
   hs-source-dirs:      src
