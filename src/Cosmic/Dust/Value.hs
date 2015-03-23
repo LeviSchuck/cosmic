@@ -20,7 +20,8 @@ import Data.Text as T
 import Data.ByteString as B
 
 data PrimitiveParticle
-  = PBool     Bool
+  =  PUnit
+  |  PBool     Bool
   -- Numbers
   | PInt      Int
   | PBigInt   Integer
@@ -49,9 +50,7 @@ data ParticleKind
   = KindUnit
   | KindSet
   | KindSingle  PP
-  | KindMap     PP
   | KindMap2    PP PP
   | KindMap3    PP PP PP
-  | KindEnum    CP
-  | KindMapEnum CP
+  | KindContext CP
   deriving(Eq,Ord,Show)
