@@ -9,15 +9,24 @@ import Data.Ord
 import Cosmic.Dust.Value
 import Cosmic.Dust.Identifiers
 
-data Fact partition
+data Fact px ent attr
   = Fact
-  { fPartition  :: partition
-  , fEntity     :: EntityID
-  , fAttribute  :: AttributeID
+  { fPartition  :: px
+  , fEntity     :: ent
+  , fAttribute  :: attr
   , fPreVal     :: ParticleKind
   , fVal        :: ParticleKind
-  , fPostVal    :: ParticleKind
+  , fMetaVal    :: ParticleKind
   } deriving(Eq,Ord,Show)
 
-type StorageFact = Fact StoragePartitionID
-type WireFact = Fact WirePartitionID
+type StorageFact
+  = Fact
+    StoragePartitionID
+    StorageEntityID
+    StorageAttributeID
+
+type WireFact
+  = Fact
+    WirePartitionID
+    WireEntityID
+    WireAttributeID

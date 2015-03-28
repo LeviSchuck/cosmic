@@ -16,8 +16,9 @@ import Prelude(Eq(..),Show(..))
 import Data.Ord
 
 -- Externals
-import Data.Text as T
-import Data.ByteString as B
+import qualified Data.Text as T
+import qualified Data.ByteString as B
+import qualified Data.Map as M
 
 data PrimitiveParticle
   =  PUnit
@@ -38,8 +39,10 @@ data PrimitiveParticle
   | PBytes    B.ByteString
   deriving(Eq,Ord,Show)
 
+
 data ContextualParticle
-  = ContextualParticle PP PP
+  = SimpleContext PP PP
+  | MappedContext (M.Map PP PP)
   deriving(Eq,Ord,Show)
 
 -- Short aliases for internal convenience.
