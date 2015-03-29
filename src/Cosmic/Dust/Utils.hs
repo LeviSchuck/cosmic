@@ -5,7 +5,6 @@ import Prelude(String,($),(++),show,(==),undefined)
 import Data.Either
 import Data.Maybe
 import Data.Word
-import Control.Monad
 import Control.Applicative((<$>))
 
 

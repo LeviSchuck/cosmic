@@ -8,7 +8,7 @@ module Cosmic.Dust.Extract
 -- Base
 import Data.Maybe
 import Data.Either
-import Prelude(String,(++),show,undefined)
+import Prelude(String,(++),undefined,Show(..))
 -- Internal
 import Cosmic.Dust.Value
 
@@ -78,11 +78,14 @@ class Extract a where
 
 -- Now for the primitives!
 
+badKind :: Show a => String -> a -> Either String b
 badKind exType kind = Left
   ("Expected "
     ++ exType
     ++ " kind, found "
     ++ show kind)
+
+badPrim :: Show a => String -> a -> Either String b
 badPrim exType prim = Left
   ("Expected a " 
     ++ exType

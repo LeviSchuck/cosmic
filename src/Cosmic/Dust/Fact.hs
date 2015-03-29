@@ -15,7 +15,7 @@ data Fact px ent attr
   , fEntity     :: ent
   , fAttribute  :: attr
   , fPreVal     :: ParticleKind
-  , fVal        :: ParticleKind
+  , fValue      :: ParticleKind
   , fMetaVal    :: ParticleKind
   } deriving(Eq,Ord,Show)
 

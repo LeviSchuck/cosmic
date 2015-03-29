@@ -9,14 +9,12 @@ module Cosmic.Dust.Identifiers
   , WireEntityID(..)
   ) where
 
-import Prelude(Eq(..),Show(..),return,String,($),(++),undefined)
-import Data.Either
+import Prelude(Eq(..),Show(..))
 import Data.Maybe
 import Data.Word
 import Data.Ord
 
 import Cosmic.Dust.Extract
-import Cosmic.Dust.Value
 import Cosmic.Dust.Utils
 
 newtype StoragePartitionID
@@ -86,9 +84,6 @@ instance TaggedDbType8 TransactionID where
 
 instance TaggedDbType8 Assertion where
   getTag _ = 160
-
-takeUnit :: PrimitiveParticle -> Either String ()
-takeUnit = extractParticle
 
 instance Extract StoragePartitionID where
   extractName _ = "Storage PartitionID"
