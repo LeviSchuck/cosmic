@@ -48,14 +48,13 @@ cabal-version:       >=1.10
 
 library
   -- Modules exported by the library.
-  exposed-modules:     Cosmic.Dust.Value
-                       Cosmic.Dust.Identifiers
-                       Cosmic.Dust.Fact
-                       Cosmic.Dust.Utils
-                       Cosmic.Dust.Extract
-                       Cosmic.Nebula.Facts
-                       Cosmic.Nebula.Sort
-                       -- Continue exposed modules here
+  exposed-modules:      Cosmic.Dust.Extract
+                        Cosmic.Dust.Fact
+                        Cosmic.Dust.Identifiers
+                        Cosmic.Dust.Utils
+                        Cosmic.Dust.Value
+                        Cosmic.Nebula.Facts
+                        Cosmic.Nebula.Sort
   -- Modules included in this library but not exported.
   -- other-modules:       
   
