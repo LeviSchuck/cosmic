@@ -2,13 +2,22 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module Cosmic.Dust.Extract
   ( Extract(..)
+  , UnsafeExtract(..)
   , badPrim
   , badKind
+  , extractPrimitive
+  , constByTypeable
+  , constByPrim
+  , constByKind
   ) where
 -- Base
 import Data.Maybe
 import Data.Either
-import Prelude(String,(++),undefined,Show(..))
+import Prelude(String,(++),Show(..),($),(.),undefined,Eq(..))
+import Data.Typeable
+import Data.Data
+import Control.Applicative(Const(..))
+
 -- Internal
 import Cosmic.Dust.Value
 
@@ -16,23 +25,83 @@ import Cosmic.Dust.Value
 import Prelude(Integer,Float,Double,Bool(..))
 import Data.Word(Word8,Word16,Word32,Word64)
 import Data.Int
+
 -- Externals
 import Data.Text as T
 import Data.ByteString as B
 
+class UnsafeExtract a where
+  unsafeExtract :: PrimitiveParticle -> a
 
+instance UnsafeExtract () where
+  unsafeExtract PUnit = ()
+  unsafeExtract _ = undefined
+
+instance UnsafeExtract Bool where
+  unsafeExtract (PBool v) = v
+  unsafeExtract _ = undefined
+
+instance UnsafeExtract Int where
+  unsafeExtract (PInt v) = v
+  unsafeExtract _ = undefined
+
+instance UnsafeExtract Integer where
+  unsafeExtract (PBigInt v) = v
+  unsafeExtract _ = undefined
+
+instance UnsafeExtract Float where
+  unsafeExtract (PFloat v) = v
+  unsafeExtract _ = undefined
+
+instance UnsafeExtract Double where
+  unsafeExtract (PDouble v) = v
+  unsafeExtract _ = undefined
+
+instance UnsafeExtract Word8 where
+  unsafeExtract (PWord8 v) = v
+  unsafeExtract _ = undefined
+
+instance UnsafeExtract Word16 where
+  unsafeExtract (PWord16 v) = v
+  unsafeExtract _ = undefined
+
+instance UnsafeExtract Word32 where
+  unsafeExtract (PWord32 v) = v
+  unsafeExtract _ = undefined
+
+instance UnsafeExtract Word64 where
+  unsafeExtract (PWord64 v) = v
+  unsafeExtract _ = undefined
+
+instance UnsafeExtract Int64 where
+  unsafeExtract (PInt64 v) = v
+  unsafeExtract _ = undefined
+
+instance UnsafeExtract T.Text where
+  unsafeExtract (PText v) = v
+  unsafeExtract _ = undefined
+
+instance UnsafeExtract B.ByteString where
+  unsafeExtract (PBytes v) = v
+  unsafeExtract _ = undefined
+
+{-|
+Extract is a way to take a raw "PartkcleKind" and
+yield a value 'a'.
+
+Most primitives already have been implemented 
+-}
 class Extract a where
   -- Types
   extractMaybe      :: ParticleKind -> Maybe a
   extractDefault    :: a -> ParticleKind -> a
   extractEither     :: ParticleKind -> Either String a
   extractParticle   :: PrimitiveParticle -> Either String a
-  extractMap2Maybe  :: ParticleKind -> Maybe (a,a)
-  extractMap3Maybe  :: ParticleKind -> Maybe (a,a,a)
-  extractMap2Either :: ParticleKind -> Either String (a,a)
-  extractMap3Either :: ParticleKind -> Either String (a,a,a)
-  extractName       :: a -> String
-  -- Default implimentations
+  expectedPrim      :: Const Constr a
+  extractNamePrim   :: Const String a
+  extractNameKind   :: Const String a
+  extractNameType   :: Const String a
+  -- Default implementations
   extractMaybe particle =
     case extractEither particle of
       Left _ -> Nothing
@@ -44,116 +113,127 @@ class Extract a where
       Just v -> v
 
   extractEither (KindSingle prim) = extractParticle prim
-  extractEither k = badKind "Single" k
+  extractEither k = badKind k
 
-  extractMap2Maybe particle =
-    case extractMap2Either particle of
-      Left _ -> Nothing
-      Right v -> Just v
+  extractNameKind = constByKind KindSingle
 
-  extractMap3Maybe particle = 
-    case extractMap3Either particle of
-      Left _ -> Nothing
-      Right v -> Just v
-
-  extractMap2Either (KindMap2 p1 p2) =
-    case extractParticle p1 of
-      Left _ -> badPrim (tName ++ " in (<1>,_)") p1
-      Right p1v -> case extractParticle p2 of
-        Left _ -> badPrim (tName ++ " in (_,<2>)") p2
-        Right p2v -> Right (p1v, p2v)
-    where tName = extractName (undefined :: a)
-  extractMap2Either k = badKind "Map2" k
-
-  extractMap3Either (KindMap3 p1 p2 p3) =
-    case extractParticle p1 of
-      Left _ -> badPrim (tName ++ " in (<1>,_,_)") p1
-      Right p1v -> case extractParticle p2 of
-        Left _ -> badPrim (tName ++ " in (_,<2>,_)") p2
-        Right p2v -> case extractParticle p3 of
-          Left _ -> badPrim (tName ++ " in (_,_,<3>)") p3
-          Right p3v -> Right (p1v, p2v, p3v)
-    where tName = extractName (undefined :: a)
-  extractMap3Either k = badKind "Map3" k
+  extractNamePrim
+    = Const
+    . showConstr
+    . getConst
+    $ (expectedPrim :: Const Constr a)
 
 -- Now for the primitives!
 
-badKind :: Show a => String -> a -> Either String b
-badKind exType kind = Left
-  ("Expected "
-    ++ exType
-    ++ " kind, found "
-    ++ show kind)
+badKind :: forall a. Extract a
+        => ParticleKind
+        -> Either String a
+badKind kind = Left $
+  "Expected "
+  ++ getConst exKind
+  ++ " kind, found "
+  ++ show kind
+  where
+    exKind :: Const String a
+    exKind = extractNameKind
 
-badPrim :: Show a => String -> a -> Either String b
-badPrim exType prim = Left
-  ("Expected a " 
-    ++ exType
-    ++ ", found "
-    ++ show prim)
+badPrim :: forall a. Extract a
+        => PrimitiveParticle
+        -> Either String a
+badPrim prim = Left $
+  "Expected a " 
+  ++ getConst exPrim
+  ++ " for "
+  ++ getConst exType
+  ++ ", found "
+  ++ show prim
+  where
+    exPrim :: Const String a
+    exPrim = extractNamePrim
+    exType :: Const String a
+    exType = extractNameType
+
+constByTypeable :: forall a. Typeable a
+                => Const String a
+constByTypeable = Const $
+  tyConName.typeRepTyCon.typeRep $ (Proxy :: Proxy a)
+
+extractPrimitive  :: forall a. (UnsafeExtract a, Extract a)
+                  => PrimitiveParticle
+                  -> Either String a
+extractPrimitive prim = if tcr == etcr
+    then Right $ unsafeExtract prim
+    else badPrim prim
+    where
+      etcr = getConst (expectedPrim :: Const Constr a)
+      tcr = toConstr prim
+
 
 instance Extract () where
-  extractName _ = "Unit"
-  extractParticle PUnit = Right ()
-  extractParticle prim = badPrim "Unit" prim
+  expectedPrim = constByPrim $ \_ -> PUnit
+  extractNameKind = constByKind $ \_ -> KindUnit
+  extractNameType = constByTypeable
+  extractParticle = extractPrimitive
+
+
 
 instance Extract Bool where
-  extractName _ = "Bool"
-  extractParticle (PBool v) = Right v
-  extractParticle prim = badPrim "Bool" prim
+  expectedPrim    = constByPrim PBool
+  extractNameType = constByTypeable
+  extractParticle = extractPrimitive
 
 instance Extract Int where
-  extractName _ = "Int"
-  extractParticle (PInt v) = Right v
-  extractParticle prim = badPrim "Int" prim
+  expectedPrim = constByPrim PInt
+  extractNameType = constByTypeable
+  extractParticle = extractPrimitive
 
 instance Extract Integer where
-  extractName _ = "BigInt"
-  extractParticle (PBigInt v) = Right v
-  extractParticle prim = badPrim "BigInt" prim
+  expectedPrim = constByPrim PBigInt
+  extractNameType = constByTypeable
+  extractParticle = extractPrimitive
 
 instance Extract Float where
-  extractName _ = "Float"
-  extractParticle (PFloat v) = Right v
-  extractParticle prim = badPrim "Float" prim
+  expectedPrim = constByPrim PFloat
+  extractNameType = constByTypeable
+  extractParticle = extractPrimitive
 
 instance Extract Double where
-  extractName _ = "Double"
-  extractParticle (PDouble v) = Right v
-  extractParticle prim = badPrim "Double" prim
+  expectedPrim = constByPrim PDouble
+  extractNameType = constByTypeable
+  extractParticle = extractPrimitive
 
 instance Extract Word8 where
-  extractName _ = "Word8"
-  extractParticle (PWord8 v) = Right v
-  extractParticle prim = badPrim "Word8" prim
+  expectedPrim = constByPrim PWord8
+  extractNameType = constByTypeable
+  extractParticle = extractPrimitive
 
 instance Extract Word16 where
-  extractName _ = "Word16"
-  extractParticle (PWord16 v) = Right v
-  extractParticle prim = badPrim "Word16" prim
+  expectedPrim = constByPrim PWord16
+  extractNameType = constByTypeable
+  extractParticle = extractPrimitive
 
 instance Extract Word32 where
-  extractName _ = "Word32"
-  extractParticle (PWord32 v) = Right v
-  extractParticle prim = badPrim "Word32" prim
+  expectedPrim = constByPrim PWord32
+  extractNameType = constByTypeable
+  extractParticle = extractPrimitive
 
 instance Extract Word64 where
-  extractName _ = "Word64"
-  extractParticle (PWord64 v) = Right v
-  extractParticle prim = badPrim "Word64" prim
+  expectedPrim = constByPrim PWord64
+  extractNameType = constByTypeable
+  extractParticle = extractPrimitive
 
 instance Extract Int64 where
-  extractName _ = "Int64"
-  extractParticle (PInt64 v) = Right v
-  extractParticle prim = badPrim "Int64" prim
+  expectedPrim = constByPrim PInt64
+  extractNameType = constByTypeable
+  extractParticle = extractPrimitive
 
 instance Extract T.Text where
-  extractName _ = "Text"
-  extractParticle (PText v) = Right v
-  extractParticle prim = badPrim "Text" prim
+  expectedPrim = constByPrim PText
+  extractNameType = constByTypeable
+  extractParticle = extractPrimitive
 
 instance Extract B.ByteString where
-  extractName _ = "Bytes"
-  extractParticle (PBytes v) = Right v
-  extractParticle prim = badPrim "Bytes" prim
+  expectedPrim = constByPrim PBytes
+  extractNameType = constByTypeable
+  extractParticle = extractPrimitive
 

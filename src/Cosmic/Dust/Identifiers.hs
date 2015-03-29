@@ -1,4 +1,5 @@
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 module Cosmic.Dust.Identifiers
   ( TransactionID(..)
   , StoragePartitionID(..)
@@ -13,49 +14,53 @@ import Prelude(Eq(..),Show(..))
 import Data.Maybe
 import Data.Word
 import Data.Ord
+import Data.Typeable
+import Data.Data
 
+
+import Cosmic.Dust.Value
 import Cosmic.Dust.Extract
 import Cosmic.Dust.Utils
 
 newtype StoragePartitionID
   = StoragePartitionID
   { unSPx :: Word32
-  } deriving(Eq,Ord,Show)
+  } deriving(Eq,Ord,Show,Typeable,Data)
 
 newtype StorageAttributeID
   = StorageAttributeID
   { unSAttr :: Word32
-  } deriving(Eq,Ord,Show)
+  } deriving(Eq,Ord,Show,Typeable,Data)
 
 newtype StorageEntityID
   = StorageEntityID
   { unSEnt :: Word64
-  } deriving(Eq,Ord,Show)
+  } deriving(Eq,Ord,Show,Typeable,Data)
 
 newtype WirePartitionID
   = WirePartitionID
   { unWPx :: Word8
-  } deriving(Eq,Ord,Show)
+  } deriving(Eq,Ord,Show,Typeable,Data)
 
 newtype WireAttributeID
   = WireAttributeID
-  { unWAttr :: Word32
-  } deriving(Eq,Ord,Show)
+  { unWAttr :: Word16
+  } deriving(Eq,Ord,Show,Typeable,Data)
 
 newtype WireEntityID
   = WireEntityID
-  { unWEnt :: Word64
-  } deriving(Eq,Ord,Show)
+  { unWEnt :: Word16
+  } deriving(Eq,Ord,Show,Typeable,Data)
 
 newtype TransactionID
   = TransactionID
   { unTx :: Word64
-  } deriving(Eq,Ord,Show)
+  } deriving(Eq,Ord,Show,Typeable,Data)
 
 data Assertion
   = Assert
   | Redact
-  deriving(Eq,Ord,Show)
+  deriving(Eq,Ord,Show,Typeable,Data)
 
 instance EnumWord8 Assertion where
   toWord8 Assert = 1
@@ -86,49 +91,65 @@ instance TaggedDbType8 Assertion where
   getTag _ = 160
 
 instance Extract StoragePartitionID where
-  extractName _ = "Storage PartitionID"
-  extractEither = extractContext1 StoragePartitionID
+  extractNameKind = constByKind KindContext
+  expectedPrim    = constByPrim PWord32
+  extractNameType = constByTypeable
+  extractEither   = extractContext1 StoragePartitionID
   -- Disallow semi-direct extraction
-  extractParticle prim = badPrim "Storage PartitionID" prim
+  extractParticle prim = badPrim prim
 
 instance Extract WirePartitionID where
-  extractName _ = "Wire PartitionID"
-  extractEither = extractContext1 WirePartitionID
+  extractNameKind = constByKind KindContext
+  expectedPrim    = constByPrim PWord8
+  extractNameType = constByTypeable
+  extractEither   = extractContext1 WirePartitionID
   -- Disallow semi-direct extraction
-  extractParticle prim = badPrim "Wire PartitionID" prim
+  extractParticle prim = badPrim prim
 
 instance Extract StorageAttributeID where
-  extractName _ = "Storage AttributeID"
-  extractEither = extractContext1 StorageAttributeID
+  extractNameKind = constByKind KindContext
+  expectedPrim    = constByPrim PWord32
+  extractNameType = constByTypeable
+  extractEither   = extractContext1 StorageAttributeID
   -- Disallow semi-direct extraction
-  extractParticle prim = badPrim "Storage AttributeID" prim
+  extractParticle = badPrim
 
 instance Extract WireAttributeID where
-  extractName _ = "Wire AttributeID"
-  extractEither = extractContext1 WireAttributeID
+  extractNameKind = constByKind KindContext
+  expectedPrim    = constByPrim PWord16
+  extractNameType = constByTypeable
+  extractEither   = extractContext1 WireAttributeID
   -- Disallow semi-direct extraction
-  extractParticle prim = badPrim "Wire AttributeID" prim
+  extractParticle prim = badPrim prim
 
 instance Extract StorageEntityID where
-  extractName _ = "Storage EntityID"
-  extractEither = extractContext1 StorageEntityID
+  extractNameKind = constByKind KindContext
+  expectedPrim    = constByPrim PWord64
+  extractNameType = constByTypeable
+  extractEither   = extractContext1 StorageEntityID
   -- Disallow semi-direct extraction
-  extractParticle prim = badPrim "Storage EntityID" prim
+  extractParticle prim = badPrim prim
 
 instance Extract WireEntityID where
-  extractName _ = "Wire EntityID"
-  extractEither = extractContext1 WireEntityID
+  extractNameKind = constByKind KindContext
+  expectedPrim    = constByPrim PWord16
+  extractNameType = constByTypeable
+  extractEither   = extractContext1 WireEntityID
   -- Disallow semi-direct extraction
-  extractParticle prim = badPrim "Wire EntityID" prim
+  extractParticle prim = badPrim prim
 
 instance Extract TransactionID where
-  extractName _ = "TransactionID"
-  extractEither = extractContext1 TransactionID
+  extractNameKind = constByKind KindContext
+  expectedPrim    = constByPrim PWord64
+  extractNameType = constByTypeable
+  extractEither   = extractContext1 TransactionID
   -- Disallow semi-direct extraction
-  extractParticle prim = badPrim "TransactionID" prim
+  extractParticle prim = badPrim prim
 
 instance Extract Assertion where
-  extractName _ = "Assertion"
-  extractEither = extractTaggedEnum Assert
+  extractNameKind = constByKind KindSingle
+  expectedPrim    = constByPrim PWord8
+  extractNameType = constByTypeable
+  extractEither   = extractTaggedEnum Assert
   -- Disallow semi-direct extraction
-  extractParticle prim = badPrim "Assertion" prim
+  extractParticle prim = badPrim prim

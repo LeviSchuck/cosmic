@@ -24,7 +24,9 @@ class TaggedDbType8 a where
   getTagPrim :: a -> PrimitiveParticle
   getTagPrim v = PWord8 $ getTag v
 
-extractEnumWord8  :: EnumWord8 a
+extractEnumWord8  ::  ( Extract a
+                      , EnumWord8 a
+                      )
                   => PrimitiveParticle
                   -> Either String a
 extractEnumWord8 t = case t of
@@ -34,7 +36,7 @@ extractEnumWord8 t = case t of
         "Given word ("
           ++ show w
           ++ ") is out of range"
-    _ -> badPrim "Assertion as Word8" t
+    _ -> badPrim t
 
 ensureWord8 :: (TaggedDbType8 t)
             => t
@@ -48,7 +50,7 @@ ensureWord8 w (PWord8 w1) = if w' == w1
     ++ " got "
     ++ (show w1)
     where w' = getTag w
-ensureWord8 _ p = badPrim "word8 tag" p
+ensureWord8 _ p = badPrim p
 
 expectedTaggedKey :: TaggedDbType8 a
                   => a
@@ -58,7 +60,10 @@ expectedTaggedKey v
     ++ show (getTag v)
     ++ " but such was not found."
 
-extractContext1 :: (Extract a, TaggedDbType8 t)
+extractContext1 ::  ( Extract a
+                    , Extract t
+                    , TaggedDbType8 t
+                    )
                 => (a -> t)
                 -> ParticleKind
                 -> Either String t
@@ -71,9 +76,13 @@ extractContext1 c (KindContext p) = do
       Nothing -> Left $ expectedTaggedKey dummy
       Just v -> extractParticle v
   where dummy = c undefined
-extractContext1 _ k = badKind "KindContext " k
+extractContext1 _ k = badKind k
 
-extractTaggedEnum :: (Extract a, TaggedDbType8 a, EnumWord8 t)
+extractTaggedEnum ::  ( Extract a
+                      , Extract t
+                      , TaggedDbType8 a
+                      , EnumWord8 t
+                      )
                   => a
                   -> ParticleKind
                   -> Either String t
@@ -89,5 +98,5 @@ extractTaggedEnum a (KindContext p) = do
       PWord8 w -> case fromWord8 w of
         Nothing -> Left $ expectedTaggedKey a
         Just f -> Right f
-      _ -> badPrim "Word8 as Enum" v
-extractTaggedEnum _ k = badKind "KindContext " k
+      _ -> badPrim v
+extractTaggedEnum _ k = badKind k
