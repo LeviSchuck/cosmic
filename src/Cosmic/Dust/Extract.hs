@@ -2,10 +2,8 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module Cosmic.Dust.Extract
   ( Extract(..)
-  , UnsafeExtract(..)
   , badPrim
   , badKind
-  , extractPrimitive
   , constByTypeable
   , constByPrim
   , constByKind
@@ -30,6 +28,7 @@ import Data.Int
 import Data.Text as T
 import Data.ByteString as B
 
+-- "UnsafeExtract" is meant for primitive types, be careful.
 class UnsafeExtract a where
   unsafeExtract :: PrimitiveParticle -> a
 
@@ -89,7 +88,27 @@ instance UnsafeExtract B.ByteString where
 Extract is a way to take a raw "PartkcleKind" and
 yield a value 'a'.
 
-Most primitives already have been implemented 
+Most primitives already have been implemented.
+
+You can implement your new types similar to this:
+
+@
+  newtype SomeID
+    = SomeID
+    { unID :: Word32
+    } deriving(Eq,Ord,Show,Typeable,Data)
+
+  instance TaggedDbType8 TransactionID where
+    getTag _ = 144
+  
+  instance Extract SomeID where
+    extractNameKind = constByKind KindContext
+    expectedPrim    = constByPrim PWord32
+    extractNameType = constByTypeable
+    extractEither   = extractContext1 SomeID
+    -- Disallow semi-direct extraction
+    extractParticle prim = badPrim prim
+@
 -}
 class Extract a where
   -- Types
@@ -174,8 +193,6 @@ instance Extract () where
   extractNameKind = constByKind $ \_ -> KindUnit
   extractNameType = constByTypeable
   extractParticle = extractPrimitive
-
-
 
 instance Extract Bool where
   expectedPrim    = constByPrim PBool

@@ -16,6 +16,7 @@ import Data.Word
 import Data.Ord
 import Data.Typeable
 import Data.Data
+import Control.Applicative(Const(..))
 
 
 import Cosmic.Dust.Value
@@ -70,25 +71,25 @@ instance EnumWord8 Assertion where
   fromWord8 _ = Nothing
 
 instance TaggedDbType8 StoragePartitionID where
-  getTag _ = 129
+  getTag = Const 129
 instance TaggedDbType8 WirePartitionID where
-  getTag _ = 130
+  getTag = Const 130
 
 instance TaggedDbType8 StorageAttributeID where
-  getTag _ = 132
+  getTag = Const 132
 instance TaggedDbType8 WireAttributeID where
-  getTag _ = 133
+  getTag = Const 133
 
 instance TaggedDbType8 StorageEntityID where
-  getTag _ = 136
+  getTag = Const 136
 instance TaggedDbType8 WireEntityID where
-  getTag _ = 137
+  getTag = Const 137
 
 instance TaggedDbType8 TransactionID where
-  getTag _ = 144
+  getTag = Const 144
 
 instance TaggedDbType8 Assertion where
-  getTag _ = 160
+  getTag = Const 160
 
 instance Extract StoragePartitionID where
   extractNameKind = constByKind KindContext
@@ -150,6 +151,7 @@ instance Extract Assertion where
   extractNameKind = constByKind KindSingle
   expectedPrim    = constByPrim PWord8
   extractNameType = constByTypeable
-  extractEither   = extractTaggedEnum Assert
+  extractEither   = extractTaggedEnum c
+    where c = Const () :: Const () Assertion
   -- Disallow semi-direct extraction
   extractParticle prim = badPrim prim
