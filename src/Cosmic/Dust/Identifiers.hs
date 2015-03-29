@@ -1,5 +1,7 @@
-{-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE
+    NoImplicitPrelude
+  , DeriveDataTypeable
+  #-}
 module Cosmic.Dust.Identifiers
   ( TransactionID(..)
   , StoragePartitionID(..)
@@ -62,6 +64,8 @@ data Assertion
   = Assert
   | Redact
   deriving(Eq,Ord,Show,Typeable,Data)
+
+
 
 instance EnumWord8 Assertion where
   toWord8 Assert = 1

@@ -1,18 +1,47 @@
-{-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE
+    NoImplicitPrelude
+  , ScopedTypeVariables
+  #-}
+{-|
+'Extract' is a way to take a raw 'Cosmic.Dust.PartkcleKind' and
+yield a value 'a'.
+
+Libraries can provide additional types not built in such as dates.
+
+However, it is not recommended to put whatever you want in here
+with the 'ByteString' type (Like collections).
+
+Most primitives already have been implemented.
+
+You can implement your new types similar to this:
+
+@
+newtype SomeID
+  = SomeID
+  { unID :: Word32
+  } deriving(Eq,Ord,Show,Typeable,Data)
+
+instance TaggedDbType8 TransactionID where
+  getTag _ = 123
+
+instance Extract SomeID where
+  extractNameKind = constByKind KindContext
+  expectedPrim    = constByPrim PWord32
+  extractNameType = constByTypeable
+  extractEither   = extractContext1 SomeID
+  -- Disallow semi-direct extraction
+  extractParticle prim = badPrim prim
+@
+-}
 module Cosmic.Dust.Extract
   ( Extract(..)
   , badPrim
   , badKind
-  , constByTypeable
-  , constByPrim
-  , constByKind
   ) where
 -- Base
 import Data.Maybe
 import Data.Either
 import Prelude(String,(++),Show(..),($),(.),undefined,Eq(..))
-import Data.Typeable
 import Data.Data
 import Control.Applicative(Const(..))
 
@@ -28,7 +57,7 @@ import Data.Int
 import Data.Text as T
 import Data.ByteString as B
 
--- "UnsafeExtract" is meant for primitive types, be careful.
+-- 'UnsafeExtract' is meant for primitive types, be careful.
 class UnsafeExtract a where
   unsafeExtract :: PrimitiveParticle -> a
 
@@ -84,41 +113,51 @@ instance UnsafeExtract B.ByteString where
   unsafeExtract (PBytes v) = v
   unsafeExtract _ = undefined
 
-{-|
-Extract is a way to take a raw "PartkcleKind" and
-yield a value 'a'.
-
-Most primitives already have been implemented.
-
-You can implement your new types similar to this:
-
-@
-  newtype SomeID
-    = SomeID
-    { unID :: Word32
-    } deriving(Eq,Ord,Show,Typeable,Data)
-
-  instance TaggedDbType8 TransactionID where
-    getTag _ = 144
-  
-  instance Extract SomeID where
-    extractNameKind = constByKind KindContext
-    expectedPrim    = constByPrim PWord32
-    extractNameType = constByTypeable
-    extractEither   = extractContext1 SomeID
-    -- Disallow semi-direct extraction
-    extractParticle prim = badPrim prim
-@
--}
+-- | Typeclass for conversion from
+-- 'ParticleKind' and 'PrimitiveParticle' to 'a'
 class Extract a where
   -- Types
-  extractMaybe      :: ParticleKind -> Maybe a
-  extractDefault    :: a -> ParticleKind -> a
-  extractEither     :: ParticleKind -> Either String a
-  extractParticle   :: PrimitiveParticle -> Either String a
+  -- | Attempts to extract 'a'
+  extractMaybe      :: ParticleKind 
+                    -- ^ Input Particle
+                    -> Maybe a
+
+  -- | This uses 'extractMaybe', if it fails, it gives the default
+  extractDefault    :: a
+                    -- ^ Default value
+                    -> ParticleKind
+                    -- ^ Input Particle
+                    -> a
+
+  -- | 'extractEither' is implemented for 'KindSingle'
+  -- direct particles, using 'extractParticle'.
+  extractEither     :: ParticleKind
+                    -- ^ Input Direct Particle
+                    -> Either String a
+                    -- ^ Output value or failure text
+
+  -- | Takes a primitive and gives the expected type 'a'
+  extractParticle   :: PrimitiveParticle
+                    -- ^ Input Primitive Particle
+                    -> Either String a
+                    -- ^ Output value or failure text
+
+  -- | Describes the constructor that is expected
+  -- and is used in failure text by default
   expectedPrim      :: Const Constr a
+
+  -- | The particle primitive name used during extraction.
+  -- This is implemented by default using "expectedPrim"
   extractNamePrim   :: Const String a
+
+  -- | Describes which kind is used, helpful for failure text.
   extractNameKind   :: Const String a
+
+  -- | Describes the type 'a' for failure text.
+  -- if 'a' is 'Data.Typeable', then you can implement this with
+  -- @
+  -- extractNameType = constByTypeable
+  -- @
   extractNameType   :: Const String a
   -- Default implementations
   extractMaybe particle =
@@ -144,6 +183,13 @@ class Extract a where
 
 -- Now for the primitives!
 
+-- | Use this to give failure text when an unexpected
+-- direct particle is encountered.
+-- 
+-- @
+-- extractEither (KindMap2 p1 p2) = ...
+-- extractEither k = badKind k
+-- @
 badKind :: forall a. Extract a
         => ParticleKind
         -> Either String a
@@ -156,6 +202,8 @@ badKind kind = Left $
     exKind :: Const String a
     exKind = extractNameKind
 
+-- | Use this to give failure text when an unexpected
+-- direct particle is encountered.
 badPrim :: forall a. Extract a
         => PrimitiveParticle
         -> Either String a
@@ -172,11 +220,6 @@ badPrim prim = Left $
     exType :: Const String a
     exType = extractNameType
 
-constByTypeable :: forall a. Typeable a
-                => Const String a
-constByTypeable = Const $
-  tyConName.typeRepTyCon.typeRep $ (Proxy :: Proxy a)
-
 extractPrimitive  :: forall a. (UnsafeExtract a, Extract a)
                   => PrimitiveParticle
                   -> Either String a
@@ -189,7 +232,7 @@ extractPrimitive prim = if tcr == etcr
 
 
 instance Extract () where
-  expectedPrim = constByPrim $ \_ -> PUnit
+  expectedPrim    = constByPrim $ \_ -> PUnit
   extractNameKind = constByKind $ \_ -> KindUnit
   extractNameType = constByTypeable
   extractParticle = extractPrimitive

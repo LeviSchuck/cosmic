@@ -1,9 +1,14 @@
-{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE
+    NoImplicitPrelude
+  , DeriveDataTypeable
+  #-}
 module Cosmic.Dust.Fact where
 
 -- Type classes from Base
 import Prelude(Eq(..),Show(..))
 import Data.Ord
+import Data.Typeable
+import Data.Data
 
 -- Internal 
 import Cosmic.Dust.Value
@@ -17,7 +22,7 @@ data Fact px ent attr
   , fPreVal     :: ParticleKind
   , fValue      :: ParticleKind
   , fMetaVal    :: ParticleKind
-  } deriving(Eq,Ord,Show)
+  } deriving(Eq,Ord,Show,Typeable,Data)
 
 type StorageFact
   = Fact
