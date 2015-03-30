@@ -81,6 +81,7 @@ constByPrim f = Const . toConstr $ f undefined
 data ContextualParticle
   = SimpleContext PP PP
   | MappedContext (M.Map PP PP)
+  | NoContext PP
   deriving(Eq,Ord,Show,Typeable,Data)
 
 -- | Short convenience alias
@@ -95,10 +96,9 @@ type CP = ContextualParticle
 data ParticleKind
   = KindUnit
   | KindSet
-  | KindSingle  PP
-  | KindMap2    PP PP
-  | KindMap3    PP PP PP
-  | KindContext CP
+  | KindSingle  CP
+  | KindMap2    CP CP
+  | KindMap3    CP CP CP
   deriving(Eq,Ord,Show,Typeable,Data)
 
 -- | Describes the constructor given for a direct particle.
@@ -109,7 +109,6 @@ constByKind f = Const $ case f undefined of
   KindSingle  _     -> "Single"
   KindMap2    _ _   -> "Map2"
   KindMap3    _ _ _ -> "Map3"
-  KindContext _     -> "Context"
 
 -- | Given a "Data.Typeable" 'a', we can automate the name
 -- by getting the type constructor.

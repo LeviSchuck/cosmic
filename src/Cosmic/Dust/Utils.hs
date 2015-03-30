@@ -53,10 +53,10 @@ extractEnumWord8  ::  forall a.
                       ( Extract a
                       , EnumWord8 a
                       )
-                  => PrimitiveParticle
+                  => ContextualParticle
                   -> Either String a
 extractEnumWord8 t = case t of
-    PWord8 w -> case fromWord8 w of
+    (NoContext (PWord8 w)) -> case fromWord8 w of
       Just r -> Right r
       Nothing -> Left $
         "Given word ("
@@ -69,9 +69,9 @@ extractEnumWord8 t = case t of
 -- | Useful for asserting the contextual tag for the enum
 ensureWord8 :: forall t. (TaggedDbType8 t, Extract t)
             => Const () t
-            -> PrimitiveParticle 
+            -> ContextualParticle 
             -> Either String ()
-ensureWord8 _ (PWord8 w1) = if w == w1
+ensureWord8 _ (NoContext (PWord8 w1)) = if w == w1
   then Right ()
   else Left $
     "Expected tag " 
@@ -106,14 +106,15 @@ extractContext1 :: forall a t.
                 => (a -> t)
                 -> ParticleKind
                 -> Either String t
-extractContext1 c (KindContext p) = do
+extractContext1 c (KindSingle p) = do
    c <$> case p of
     SimpleContext u v -> do
-      ew8 u
-      extractParticle v
+      ew8 (NoContext u)
+      extractParticle (NoContext v)
     MappedContext m -> case M.lookup primtag m of
       Nothing -> Left $ expected
-      Just v -> extractParticle v
+      Just v -> extractParticle (NoContext v)
+    _ -> badPrim p
   where
     primtag = getConst (getTagPrim :: Const PrimitiveParticle t)
     expected = getConst (expectedTaggedKey :: Const String t)
@@ -151,19 +152,20 @@ extractTaggedEnum ::  forall a t.
                   => Const () a
                   -> ParticleKind
                   -> Either String t
-extractTaggedEnum _ (KindContext p) = do
+extractTaggedEnum _ (KindSingle p) = do
   v <- case p of
     SimpleContext u v -> do
-      ew8 u
+      ew8 (NoContext u)
       Right v
     MappedContext m -> case M.lookup primtag m of
       Nothing -> Left $ expected
       Just v -> Right v
+    _ -> Left $ "No Context given for " ++ show p
   case v of
       PWord8 w -> case fromWord8 w of
         Nothing -> Left $ expected
         Just f -> Right f
-      _ -> badPrim v
+      _ -> badPrim p
   where
     primtag = getConst (getTagPrim :: Const PrimitiveParticle a)
     ew8 = ensureWord8 (Const () :: Const () a)

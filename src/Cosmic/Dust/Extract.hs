@@ -114,7 +114,7 @@ instance UnsafeExtract B.ByteString where
   unsafeExtract _ = undefined
 
 -- | Typeclass for conversion from
--- 'ParticleKind' and 'PrimitiveParticle' to 'a'
+-- 'ParticleKind' and 'ContextualParticle' to 'a'
 class Extract a where
   -- Types
   -- | Attempts to extract 'a'
@@ -137,7 +137,7 @@ class Extract a where
                     -- ^ Output value or failure text
 
   -- | Takes a primitive and gives the expected type 'a'
-  extractParticle   :: PrimitiveParticle
+  extractParticle   :: ContextualParticle
                     -- ^ Input Primitive Particle
                     -> Either String a
                     -- ^ Output value or failure text
@@ -205,7 +205,7 @@ badKind kind = Left $
 -- | Use this to give failure text when an unexpected
 -- direct particle is encountered.
 badPrim :: forall a. Extract a
-        => PrimitiveParticle
+        => ContextualParticle
         -> Either String a
 badPrim prim = Left $
   "Expected a " 
@@ -220,12 +220,18 @@ badPrim prim = Left $
     exType :: Const String a
     exType = extractNameType
 
+extractSemiPrimitive  :: forall a. (UnsafeExtract a, Extract a)
+                      => ContextualParticle
+                      -> Either String a
+extractSemiPrimitive (NoContext prim) = extractPrimitive prim
+extractSemiPrimitive prim = badPrim prim
+
 extractPrimitive  :: forall a. (UnsafeExtract a, Extract a)
                   => PrimitiveParticle
                   -> Either String a
 extractPrimitive prim = if tcr == etcr
     then Right $ unsafeExtract prim
-    else badPrim prim
+    else badPrim (NoContext prim)
     where
       etcr = getConst (expectedPrim :: Const Constr a)
       tcr = toConstr prim
@@ -235,65 +241,65 @@ instance Extract () where
   expectedPrim    = constByPrim $ \_ -> PUnit
   extractNameKind = constByKind $ \_ -> KindUnit
   extractNameType = constByTypeable
-  extractParticle = extractPrimitive
+  extractParticle = extractSemiPrimitive
 
 instance Extract Bool where
   expectedPrim    = constByPrim PBool
   extractNameType = constByTypeable
-  extractParticle = extractPrimitive
+  extractParticle = extractSemiPrimitive
 
 instance Extract Int where
   expectedPrim = constByPrim PInt
   extractNameType = constByTypeable
-  extractParticle = extractPrimitive
+  extractParticle = extractSemiPrimitive
 
 instance Extract Integer where
   expectedPrim = constByPrim PBigInt
   extractNameType = constByTypeable
-  extractParticle = extractPrimitive
+  extractParticle = extractSemiPrimitive
 
 instance Extract Float where
   expectedPrim = constByPrim PFloat
   extractNameType = constByTypeable
-  extractParticle = extractPrimitive
+  extractParticle = extractSemiPrimitive
 
 instance Extract Double where
   expectedPrim = constByPrim PDouble
   extractNameType = constByTypeable
-  extractParticle = extractPrimitive
+  extractParticle = extractSemiPrimitive
 
 instance Extract Word8 where
   expectedPrim = constByPrim PWord8
   extractNameType = constByTypeable
-  extractParticle = extractPrimitive
+  extractParticle = extractSemiPrimitive
 
 instance Extract Word16 where
   expectedPrim = constByPrim PWord16
   extractNameType = constByTypeable
-  extractParticle = extractPrimitive
+  extractParticle = extractSemiPrimitive
 
 instance Extract Word32 where
   expectedPrim = constByPrim PWord32
   extractNameType = constByTypeable
-  extractParticle = extractPrimitive
+  extractParticle = extractSemiPrimitive
 
 instance Extract Word64 where
   expectedPrim = constByPrim PWord64
   extractNameType = constByTypeable
-  extractParticle = extractPrimitive
+  extractParticle = extractSemiPrimitive
 
 instance Extract Int64 where
   expectedPrim = constByPrim PInt64
   extractNameType = constByTypeable
-  extractParticle = extractPrimitive
+  extractParticle = extractSemiPrimitive
 
 instance Extract T.Text where
   expectedPrim = constByPrim PText
   extractNameType = constByTypeable
-  extractParticle = extractPrimitive
+  extractParticle = extractSemiPrimitive
 
 instance Extract B.ByteString where
   expectedPrim = constByPrim PBytes
   extractNameType = constByTypeable
-  extractParticle = extractPrimitive
+  extractParticle = extractSemiPrimitive
 

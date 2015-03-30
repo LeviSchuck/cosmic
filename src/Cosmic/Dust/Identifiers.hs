@@ -112,7 +112,7 @@ instance TaggedDbType8 Assertion where
   getTag = Const 160
 
 instance Extract StoragePartitionID where
-  extractNameKind = constByKind KindContext
+  extractNameKind = constByKind KindSingle
   expectedPrim    = constByPrim PWord32
   extractNameType = constByTypeable
   extractEither   = extractContext1 StoragePartitionID
@@ -120,7 +120,7 @@ instance Extract StoragePartitionID where
   extractParticle prim = badPrim prim
 
 instance Extract WirePartitionID where
-  extractNameKind = constByKind KindContext
+  extractNameKind = constByKind KindSingle
   expectedPrim    = constByPrim PWord8
   extractNameType = constByTypeable
   extractEither   = extractContext1 WirePartitionID
@@ -128,7 +128,7 @@ instance Extract WirePartitionID where
   extractParticle prim = badPrim prim
 
 instance Extract StorageAttributeID where
-  extractNameKind = constByKind KindContext
+  extractNameKind = constByKind KindSingle
   expectedPrim    = constByPrim PWord32
   extractNameType = constByTypeable
   extractEither   = extractContext1 StorageAttributeID
@@ -136,7 +136,7 @@ instance Extract StorageAttributeID where
   extractParticle = badPrim
 
 instance Extract WireAttributeID where
-  extractNameKind = constByKind KindContext
+  extractNameKind = constByKind KindSingle
   expectedPrim    = constByPrim PWord16
   extractNameType = constByTypeable
   extractEither   = extractContext1 WireAttributeID
@@ -144,7 +144,7 @@ instance Extract WireAttributeID where
   extractParticle prim = badPrim prim
 
 instance Extract StorageEntityID where
-  extractNameKind = constByKind KindContext
+  extractNameKind = constByKind KindSingle
   expectedPrim    = constByPrim PWord64
   extractNameType = constByTypeable
   extractEither   = extractContext1 StorageEntityID
@@ -152,7 +152,7 @@ instance Extract StorageEntityID where
   extractParticle prim = badPrim prim
 
 instance Extract WireEntityID where
-  extractNameKind = constByKind KindContext
+  extractNameKind = constByKind KindSingle
   expectedPrim    = constByPrim PWord16
   extractNameType = constByTypeable
   extractEither   = extractContext1 WireEntityID
@@ -160,7 +160,7 @@ instance Extract WireEntityID where
   extractParticle prim = badPrim prim
 
 instance Extract TransactionID where
-  extractNameKind = constByKind KindContext
+  extractNameKind = constByKind KindSingle
   expectedPrim    = constByPrim PWord64
   extractNameType = constByTypeable
   extractEither   = extractContext1 TransactionID
