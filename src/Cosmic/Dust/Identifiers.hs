@@ -2,6 +2,13 @@
     NoImplicitPrelude
   , DeriveDataTypeable
   #-}
+
+{-|
+
+These are mostly for convenience for your own wire messages
+or storage payloads.
+
+-}
 module Cosmic.Dust.Identifiers
   ( TransactionID(..)
   , StoragePartitionID(..)
@@ -10,6 +17,7 @@ module Cosmic.Dust.Identifiers
   , WirePartitionID(..)
   , WireAttributeID(..)
   , WireEntityID(..)
+  , Assertion(..)
   ) where
 
 import Prelude(Eq(..),Show(..))
@@ -25,41 +33,49 @@ import Cosmic.Dust.Value
 import Cosmic.Dust.Extract
 import Cosmic.Dust.Utils
 
+-- | 32 bit partition ID, meant for storage use
 newtype StoragePartitionID
   = StoragePartitionID
   { unSPx :: Word32
   } deriving(Eq,Ord,Show,Typeable,Data)
 
+-- | 32 bit attribute ID, meant for storage use
 newtype StorageAttributeID
   = StorageAttributeID
   { unSAttr :: Word32
   } deriving(Eq,Ord,Show,Typeable,Data)
 
+-- | 64 bit entity ID, meant for storage use
 newtype StorageEntityID
   = StorageEntityID
   { unSEnt :: Word64
   } deriving(Eq,Ord,Show,Typeable,Data)
 
+-- | 8 bit partition ID, meant for wire messages
 newtype WirePartitionID
   = WirePartitionID
   { unWPx :: Word8
   } deriving(Eq,Ord,Show,Typeable,Data)
 
+-- | 16 bit attribute ID, meant for wire messages
 newtype WireAttributeID
   = WireAttributeID
   { unWAttr :: Word16
   } deriving(Eq,Ord,Show,Typeable,Data)
 
+-- | 16 bit entity ID, meant for wire messages
 newtype WireEntityID
   = WireEntityID
   { unWEnt :: Word16
   } deriving(Eq,Ord,Show,Typeable,Data)
 
+-- | Transaction IDs, meant for meta information in storage
 newtype TransactionID
   = TransactionID
   { unTx :: Word64
   } deriving(Eq,Ord,Show,Typeable,Data)
 
+-- | Asserts or Redacts a fact for use in storage.
 data Assertion
   = Assert
   | Redact

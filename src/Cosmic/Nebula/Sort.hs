@@ -1,4 +1,10 @@
-{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE
+    NoImplicitPrelude
+  #-}
+{-|
+This has convenience function for sorting facts within
+"Cosmic.Nebula.Facts"
+-}
 module Cosmic.Nebula.Sort where
 
 import Data.Ord
@@ -9,6 +15,8 @@ import Cosmic.Dust.Fact
 
 import qualified Data.Vector as V
 
+-- | Sort kinds, with both generic, and value specific
+-- comparison functinos
 data FactSort
   = ByEntity
   | ByAttribute
@@ -16,16 +24,29 @@ data FactSort
   | ByValue
   | ByMetaValue
   | FnPre   (ParticleKind -> ParticleKind -> Ordering)
+  -- ^ Comparison function for PreValues
   | FnValue (ParticleKind -> ParticleKind -> Ordering)
+  -- ^ Comparison function for the main Values
   | FnMeta  (ParticleKind -> ParticleKind -> Ordering)
+  -- ^ Comparison functino for the meta values
 
+-- | A list of things to sort in order by.
+-- 
+-- If the first kind is already sorted by, then we will
+-- try to sort by the next sort kind.
 type SortList = V.Vector FactSort
 
+-- | A function to be used in 'Cosmic.Nebula.Facts' for sorting
+-- convenience.
 bySortList  :: (Ord p, Ord e, Ord a)
                 => SortList
+                -- ^ List of ways to sort by in order
                 -> Fact p e a
+                -- ^ First Fact
                 -> Fact p e a
+                -- ^ Second Fact
                 -> Ordering
+                -- ^ Resulting ordering
 bySortList sl f1 f2 = V.foldl sc EQ sl
   where
     sc c k
